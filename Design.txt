@@ -1,0 +1,20 @@
+What additional properties did you add to your models and why?
+
+I included two more entities: Dice and Players. Since this is a multiplayer game, the players entity connects multiple users to a game.
+This also made it easier to get a user's active games since I could search through the players database to find games they were in.
+In turn, the dice enitity keeps track of players dice and is connected through a player key to a game. When the game is completed and
+the dice total needs to get calculated, all the players could be found in a game, and all the dice for those players could be found.
+
+What were some of the trade-offs or struggles you faced when implementing the new game logic?
+
+It was a little tricky at first to come up with the most efficient schema, but in the end, I'm happy with the one I ended up using.
+The one to many relationships between games, players, and dice made it straight forward to make get requests and calculations.
+Since liars dice is such an important game of information, I would like to one day return and make email notifications for when a game
+is created notifying users of what dice they have. Additionally, more controls to prevent users from abusing the game system is much
+desired. For instance, there's nothing from preventing a user from playing a game against him or herself and falsifying a high score.
+
+Another challenge was adding the "cancel game" feature. Just completely cancelling a game can lead to rage quits, and depending on the
+circumstances, it's difficult figuring out if someone should be awarded score points or not. A better feature would be a drop player
+option. This way the remaining players can keep playing the game and a winner can still be awarded points. 
+
+Another desire would be to add OAuth when users want to make a move. It's much more secure than my simple system.

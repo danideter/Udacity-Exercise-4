@@ -1,0 +1,4 @@
+cron:
+- description: Send a reminder email to all inactive users
+  url: /crons/send_reminder
+  schedule: every 24 hours
