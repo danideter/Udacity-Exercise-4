@@ -113,10 +113,10 @@ class Dice(ndb.Model):
 
 class Score(ndb.Model):
     user = ndb.KeyProperty(required=True, kind='User')
-    games = ndb.IntegerProperty(required=True)
-    wins = ndb.IntegerProperty(required=True)
+    games = ndb.IntegerProperty(required=True, default=1)
+    wins = ndb.IntegerProperty(required=True, default=0)
     # Total number of turns took to win a game
-    score = ndb.IntegerProperty(required=True)
+    score = ndb.IntegerProperty(required=True, default=0)
 
     def to_form(self, rank):
         """Returns a GameForm representation of the Game"""

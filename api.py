@@ -5,7 +5,6 @@ move game logic to another file. Ideally the API will be simple, concerned
 primarily with communication to/from the API's users."""
 
 
-import logging
 import endpoints
 
 from protorpc import remote, messages
@@ -169,7 +168,7 @@ class LiarsDiceApi(remote.Service):
         # Idea: would be a Player field
         if game:
             if game.game_over or game.cancelled:
-                return game.to_form('Game already over!')
+                raise endpoints.ConflictException('Game already over!')
             else:
                 game.cancelled = True
                 game.put()
@@ -224,7 +223,7 @@ class LiarsDiceApi(remote.Service):
 
         # Validity logic
         if game.game_over or game.cancelled:
-            return game.to_form('Game already over!')
+            raise endpoints.ConflictException('Game already over!')
 
         bidding_player = Player.query(
             Player.game == game.key,
@@ -233,26 +232,30 @@ class LiarsDiceApi(remote.Service):
         bidding_user = bidding_player.user.get()
 
         if bidding_user.password != request.password:
-            return game.to_form('Invalid password.')
+            raise endpoints.UnauthorizedException('Invalid password.')
 
         if (game.bid_face == game.die_faces and
                 game.bid_total == game.dice_total * game.players):
-            return game.to_form('Already at max possible bid. Bid cannot be '
-                                'rasied. Call liar to end game.')
+            raise endpoints.BadRequestException('Already at max possible bid. '
+                                                'Bid cannot be rasied. Call '
+                                                'liar to end game.')
 
         if request.bid_face < 1 or request.bid_face > game.die_faces:
-            return game.to_form('Invalid face number. Must be between 1 '
-                                'and ' + str(game.die_faces) + '.')
+            raise endpoints.BadRequestException('Invalid face number. Must be '
+                                                'between 1 and ' 
+                                                + str(game.die_faces) + '.')
 
         if request.bid_face < game.bid_face:
-            return game.to_form('Invalid dice face. Must be greater than or '
-                                'equal to the current dice face bid:%d.' %
-                                (game.bid_face))
+            raise endpoints.BadRequestException('Invalid dice face. Must be '
+                                                'greater than or equal to the '
+                                                'current dice face bid:%d.'
+                                                % (game.bid_face))
 
         if (request.bid_face == game.bid_face and
                 request.bid_total <= game.bid_total):
-            return game.to_form('Invalid bid. If not raising dice face, '
-                                'must raise dice total')
+            raise endpoints.BadRequestException('Invalid bid. If not raising '
+                                                'dice face, must raise dice '
+                                                'total')
 
         # Game logic
         game.bid_face = request.bid_face
@@ -315,7 +318,7 @@ class LiarsDiceApi(remote.Service):
             return game.to_form('Game already over!')
 
         if game.turn < 1:
-            return game.to_form(
+            raise endpoints.BadRequestException(
                 'At least one turn must pass before calling liar.')
 
         # Get players of interest
@@ -332,7 +335,7 @@ class LiarsDiceApi(remote.Service):
         calling_user = calling_player.user.get()
 
         if calling_user.password != request.password:
-            return game.to_form('Invalid password.')
+            raise endpoints.UnauthorizedException('Invalid password.')
 
         # Game Logic
         game.game_over = True
@@ -356,7 +359,7 @@ class LiarsDiceApi(remote.Service):
             if players.count() > 1:
                 score_user = player.user.get()
                 score = Score.query(Score.user == score_user.key).get()
-                if score:
+                if score is not None:
                     score.games += 1
                 else:
                     score = Score(user=score_user.key,

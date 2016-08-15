@@ -2,7 +2,6 @@
 
 """main.py - This file contains handlers that are called by taskqueue and/or
 cronjobs."""
-import logging
 
 import webapp2
 from google.appengine.api import mail, app_identity
@@ -41,18 +40,27 @@ class SendReminderEmail(webapp2.RequestHandler):
         """Send a reminder email to each User with an email about games.
         Called every 24 hours using a cron job"""
         app_id = app_identity.get_application_id()
-        games = Game.query(Game.game_over == False, Game.cancelled == False)
-        for game in games:
-            player = Player.query(
-                Player.game == game.key,
-                Player.order == game.bid_player % game.players + 1).get()
-
-            user = player.user.get()
+        # Step 1: Find all userrs
+        users = User.query()
+        games = []
+        for user in users:
             if user.email is not None:
+                # Step 2: Find player instances of that user
+                player_instances = Player.query(Player.user == user.key)
+                # Step 3: For each player intance find out if game is active
+                # and if it's user's turn
+                for player in player_instances:
+                    game = player.game.get()
+                    if not game.game_over and not game.cancelled:
+                        games.append(game.key.urlsafe())
+
                 subject = 'Liar\'s Dice Reminder!'
-                body = ('Hello {}, your oppoents are waiting in game {}.'
-                        .format(user.user_name, game.key.urlsafe()))
-                body += '\n\nYour password: {}'.format(user.password)
+                body = ('Hello {}, your oppoents are waiting for you.'
+                        .format(user.user_name))
+                body += ('\nHere are your active games:')
+                for game in games:
+                    body += ('\n{}').format(game)
+                body += ('\n\nYour password: {}').format(user.password)
                 # This will send test emails, the arguments to send_mail are:
                 # from, to, subject, body
                 mail.send_mail('noreply@{}.appspotmail.com'.format(app_id),

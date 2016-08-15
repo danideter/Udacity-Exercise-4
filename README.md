@@ -93,7 +93,7 @@ A version of the game has been deployed to piratesdicegame.appspot.com
 
  - **cancel_game**
     - Path: 'cancel/{urlsafe_game_key}'
-    - Method: GET
+    - Method: PUT
     - Parameters: urlsafe_game_key
     - Returns: GameForm with cancelled game state.
     - Description: Cancels a game and returns the game state as confirmation.
@@ -117,7 +117,7 @@ A version of the game has been deployed to piratesdicegame.appspot.com
     
  - **call_liar**
     - Path: 'liar/{urlsafe_game_key}'
-    - Method: GET
+    - Method: PUT
     - Parameters: urlsafe_game_key, password
     - Returns: GameForm with end game state.
     - Description: Ends the game and determines a winner by calculating the true dice total
