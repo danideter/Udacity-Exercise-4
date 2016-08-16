@@ -41,21 +41,21 @@ class SendReminderEmail(webapp2.RequestHandler):
         Called every 24 hours using a cron job"""
         app_id = app_identity.get_application_id()
         # Step 1: Find all userrs
-        users = User.query()
-        games = []
+        users = User.query(User.email != None)
         for user in users:
-            if user.email is not None:
-                # Step 2: Find player instances of that user
-                player_instances = Player.query(Player.user == user.key)
-                # Step 3: For each player intance find out if game is active
-                # and if it's user's turn
-                for player in player_instances:
-                    game = player.game.get()
-                    if not game.game_over and not game.cancelled:
+            games = []
+            # Step 2: Find player instances of that user
+            player_instances = Player.query(Player.user == user.key)
+            # Step 3: For each player intance find out if game is active
+            # and if it's user's turn
+            for player in player_instances:
+                game = player.game.get()
+                if (not game.game_over and not game.cancelled and 
+                    (game.bid_player % game.players + 1 == player.order)):
                         games.append(game.key.urlsafe())
-
+            if len(games) > 0:
                 subject = 'Liar\'s Dice Reminder!'
-                body = ('Hello {}, your oppoents are waiting for you.'
+                body = ('Hello {}, your opponents are waiting for you.'
                         .format(user.user_name))
                 body += ('\nHere are your active games:')
                 for game in games:

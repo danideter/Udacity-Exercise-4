@@ -64,6 +64,9 @@ class LiarsDiceApi(remote.Service):
             email=request.email,
             password=request.password)
         user.put()
+        # Setup user score for high score
+        score = Score(user=user.key)
+        score.put()
         return StringMessage(message='User {} created!'.format(
                 request.user_name))
 
@@ -354,20 +357,6 @@ class LiarsDiceApi(remote.Service):
                 if die.face == game.bid_face:
                     dice_total += die.total
 
-            # Score logic
-            # Prevent score for being raised if playing against self
-            if players.count() > 1:
-                score_user = player.user.get()
-                score = Score.query(Score.user == score_user.key).get()
-                if score is not None:
-                    score.games += 1
-                else:
-                    score = Score(user=score_user.key,
-                                  games=1,
-                                  wins=0,
-                                  score=0)
-                score.put()
-
         message = ('For a face of %d: real total - %d, bid total - %d. ' %
                    (game.bid_face, dice_total, game.bid_total))
         if die.total < game.bid_total:
@@ -386,11 +375,20 @@ class LiarsDiceApi(remote.Service):
         # Add score to winner
         # Prevent score for being raised if playing against self
         if players.count() > 1:
-            winner_score = Score.query(Score.user == game.winner).get()
-            winner_score.wins += 1
-            winner_score.score += game.turn
-
-            winner_score.put()
+            for player in players:
+                # Score logic
+                # Prevent score for being raised if playing against self
+                if players.count() > 1:
+                    score_user = player.user.get()
+                    score = Score.query(Score.user == score_user.key).get()
+                    if score is not None:
+                        score.games += 1
+                    else:
+                        score = Score(user=score_user.key)
+                    if player.user == game.winner:
+                        score.wins += 1
+                        score.score += game.turn
+                    score.put()
         game.put()
         return game.to_form(message)
 

@@ -113,7 +113,7 @@ class Dice(ndb.Model):
 
 class Score(ndb.Model):
     user = ndb.KeyProperty(required=True, kind='User')
-    games = ndb.IntegerProperty(required=True, default=1)
+    games = ndb.IntegerProperty(required=True, default=0)
     wins = ndb.IntegerProperty(required=True, default=0)
     # Total number of turns took to win a game
     score = ndb.IntegerProperty(required=True, default=0)
